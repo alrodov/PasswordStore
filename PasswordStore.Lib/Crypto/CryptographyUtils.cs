@@ -3,9 +3,12 @@
     using System;
     using System.IO;
     using System.Security.Cryptography;
-    
+    using System.Text;
+
     public static class CryptographyUtils
     {
+        private static MD5CryptoServiceProvider md5CryptoServiceProvider = new MD5CryptoServiceProvider();
+        
         /// <summary>
         /// Шифрует текстовые данные с использованием заданного текстового ключа с помощью алгоритма AES
         /// </summary>
@@ -69,6 +72,16 @@
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Возвращает хеш-значение ключевого значения в виде base64-строки
+        /// </summary>
+        /// <param name="openKey">Значение ключа в открытом виде</param>
+        /// <returns>Хеш ключа, преобразованный в base64</returns>
+        public static string GetKeyHash(string openKey)
+        {
+            return Convert.ToBase64String(md5CryptoServiceProvider.ComputeHash(Encoding.UTF8.GetBytes(openKey)));
         }
 
         /// <summary>
