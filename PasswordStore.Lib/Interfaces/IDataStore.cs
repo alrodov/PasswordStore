@@ -26,7 +26,5 @@
         void Delete(long entityId);
 
         void Delete(IEnumerable<long> entityIds);
-
-        IDbContextTransaction BeginTransaction();
     }
 }

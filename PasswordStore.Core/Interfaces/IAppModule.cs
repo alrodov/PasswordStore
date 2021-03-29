@@ -1,5 +1,6 @@
 ﻿namespace PasswordStore.Core.Interfaces
 {
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
     /// <summary>
@@ -7,9 +8,11 @@
     /// </summary>
     public interface IAppModule
     {
-        /// <summary>
+        /// <summary> 
         /// Проинициализировать модуль с регистрацией компонентов в DI-контейнере
         /// </summary>
-        void Initialize(IServiceCollection serviceCollection);
+        /// <param name="serviceCollection">Коллекция сервисов для регистрации компонентов</param>
+        /// <param name="configuration">Конфигурация приложения</param>
+        void Initialize(IServiceCollection serviceCollection, IConfiguration configuration);
     }
 }

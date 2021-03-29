@@ -72,11 +72,6 @@
             this.dataContext.SaveChanges();
         }
 
-        public IDbContextTransaction BeginTransaction()
-        {
-            return this.dataContext.Database.BeginTransaction();
-        }
-
         public void Dispose()
         {
             this.dataContext.Dispose();

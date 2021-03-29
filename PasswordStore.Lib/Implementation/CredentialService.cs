@@ -1,5 +1,6 @@
 ﻿namespace PasswordStore.Lib.Implementation
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using PasswordStore.Lib.Crypto;
@@ -12,9 +13,16 @@
         private IDataStore<User> userStore;
 
         private IUserIdentity userIdentity;
+
+        private ITransactionManager transactionManager;
         
-        public CredentialService(IDataStore<Credential> credentialStore, IDataStore<User> userStore, IUserIdentity userIdentity)
+        public CredentialService(
+            ITransactionManager transactionManager,
+            IDataStore<Credential> credentialStore,
+            IDataStore<User> userStore,
+            IUserIdentity userIdentity)
         {
+            this.transactionManager = transactionManager;
             this.credentialStore = credentialStore;
             this.userIdentity = userIdentity;
             this.userStore = userStore;
@@ -34,31 +42,40 @@
             return query.ToList();
         }
 
-        public void SetCredential(string serviceName, string login, string password)
+        public void AddCredential(string serviceName, string login, string password)
         {
             var lowerLogin = login.ToLowerInvariant();
-            var existingCredential = this.credentialStore
-                .GetAll()
-                .SingleOrDefault(x => x.ServiceName == serviceName && x.Login == lowerLogin);
+            var existingCredential = this.FindCredential(serviceName, lowerLogin);
+            if (existingCredential != null)
+            {
+                throw new Exception("Пароль для указанных сервиса и логина уже сохранён. Используйте функцию обновления пароля для изменения данных.");
+            }
+            
             var masterKey = this.userIdentity.GetUserKey();
             var storablePassword = CryptographyUtils.Encrypt(masterKey, password);
+            var userId = this.userIdentity.GetUserId();
+            this.credentialStore.Create(new Credential
+            {
+                Login = lowerLogin,
+                Password = storablePassword,
+                ServiceName = serviceName,
+                UserId = userId.Value
+            });
+        }
+
+        public void ChangePassword(string serviceName, string login, string password)
+        {
+            var lowerLogin = login.ToLowerInvariant();
+            var existingCredential = this.FindCredential(serviceName, lowerLogin);
             if (existingCredential == null)
             {
-                var userId = this.userIdentity.GetUserId();
-                this.credentialStore.Create(new Credential
-                {
-                    Login = lowerLogin,
-                    Password = storablePassword,
-                    ServiceName = serviceName,
-                    UserId = userId.Value
-                });
+                throw new Exception("Запись для указанных сервиса и логина не найдена. Используйте функцию добавления записи для сохранения пароля.");
             }
-            else
-            {
-                existingCredential.Login = login;
-                existingCredential.Password = storablePassword;
-                this.credentialStore.Update(existingCredential);
-            }
+            
+            var masterKey = this.userIdentity.GetUserKey();
+            var storablePassword = CryptographyUtils.Encrypt(masterKey, password);
+            existingCredential.Password = storablePassword;
+            this.credentialStore.Update(existingCredential);
         }
 
         public string ShowPassword(string serviceName, string login = null)
@@ -83,6 +100,11 @@
             }
 
             var ids = idsQuery.Select(x => x.Id).ToList();
+            if (!ids.Any())
+            {
+                throw new Exception("В хранилище не найдены записи по указанным сервису и логину");
+            }
+            
             this.credentialStore.Delete(ids);
         }
 
@@ -90,7 +112,7 @@
         {
             var userId = this.userIdentity.GetUserId().Value;
             var currentKey = this.userIdentity.GetUserKey();
-            using (var transaction = this.credentialStore.BeginTransaction())
+            using (var transaction = this.transactionManager.BeginTransaction())
             {
                 var credentials = credentialStore.GetAll().ToList();
                 var user = this.userStore.Get(userId);
@@ -109,6 +131,13 @@
             
             
             this.userIdentity.SetIdentity(userId, newKey);
+        }
+
+        private Credential FindCredential(string serviceName, string login)
+        {
+            return this.credentialStore
+                .GetAll()
+                .SingleOrDefault(x => x.ServiceName == serviceName && x.Login == login);
         }
     }
 }

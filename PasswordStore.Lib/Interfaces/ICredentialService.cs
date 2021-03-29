@@ -22,12 +22,20 @@
         IList<Credential> FindByName(string name, bool matchExactly);
 
         /// <summary>
-        /// Сохраняет значение пароля
+        /// Добавляет новую запись учётных данных
         /// </summary>
         /// <param name="serviceName">Имя сервиса, к которому относится пароль</param>
         /// <param name="login">Логин учётной записи</param>
         /// <param name="password">Пароль (в открытом виде)</param>
-        void SetCredential(string serviceName, string login, string password);
+        void AddCredential(string serviceName, string login, string password);
+
+        /// <summary>
+        /// Изменяет значение пароля
+        /// </summary>
+        /// <param name="serviceName">Имя сервиса, к которому относится пароль</param>
+        /// <param name="login">Логин учётной записи</param>
+        /// <param name="password">Пароль (в открытом виде)</param>
+        void ChangePassword(string serviceName, string login, string password);
 
         /// <summary>
         /// Удаляет пароль
