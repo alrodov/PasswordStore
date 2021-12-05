@@ -15,6 +15,8 @@
 
     public class ApplicationLifecycle
     {
+        private const string SuccessfulAuthMessage = "Пользователь успешно аутентифицирован";
+        
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
         private IUserService userService;
@@ -47,6 +49,7 @@
             var exit = false;
             while (!exit)
             {
+                Console.Write(">");
                 var args = Console.ReadLine().Split(' ');
                 var message = string.Empty;
                 try
@@ -105,7 +108,10 @@
             {
                 Console.Write($"Ключ доступа пользователя {login}: ");
                 var key = this.ReadPassword();
-                this.authService.Login(login, key);
+                if (this.authService.Login(login, key))
+                {
+                    Console.WriteLine(SuccessfulAuthMessage);
+                }
             }
         }
 
@@ -118,9 +124,19 @@
             Console.WriteLine("Выполняется регистрация нового пользователя");
             Console.Write($"Ключ доступа для пользователя {login}: ");
             var key = Console.ReadLine();
+            Console.Write($"Подтвердите ключ доступа: ");
+            var keyConfirm = Console.ReadLine();
+            if (key != keyConfirm)
+            {
+                Console.WriteLine("Ключи доступа не совпадают");
+                return;
+            }
             
             this.userService.Register(login, key);
-            this.authService.Login(login, key);
+            if (this.authService.Login(login, key))
+            {
+                Console.WriteLine(SuccessfulAuthMessage);
+            }
         }
 
         /// <summary>
@@ -222,6 +238,8 @@
                 }
             }
             while (key != ConsoleKey.Enter);
+
+            Console.WriteLine();
 
             return result;
         }

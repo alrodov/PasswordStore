@@ -10,7 +10,8 @@
         /// </summary>
         /// <param name="userName">Логин</param>
         /// <param name="masterKey">Ключ доступа</param>
-        void Login(string userName, string masterKey);
+        /// <returns>Признак успеха аутентификации</returns>
+        bool Login(string userName, string masterKey);
 
         /// <summary>
         /// Выход текущего пользователя из системы

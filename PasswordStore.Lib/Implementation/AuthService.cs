@@ -19,7 +19,7 @@
             this.userStore = userStore;
         }
         
-        public void Login(string userName, string masterKey)
+        public bool Login(string userName, string masterKey)
         {
             var user = this.userStore.GetAll().FirstOrDefault(x => x.Login == userName);
             if (user == null)
@@ -34,6 +34,8 @@
             }
             
             this.userIdentity.SetIdentity(user.Id, masterKey);
+
+            return true;
         }
 
         public void Logout()
