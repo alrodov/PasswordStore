@@ -3,6 +3,7 @@
         xmlns:vm="using:PasswordStore.UI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:PasswordStore.UI.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="PasswordStore.UI.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -10,20 +11,15 @@
         TransparencyLevelHint="Blur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="30"
         Width="450"
         Height="700"
-        CanResize="False">
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Content="{Binding Content}">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-    
-    <Panel>
-        <ExperimentalAcrylicBorder IsHitTestVisible="False">
-            <ExperimentalAcrylicBorder.Material>
-                <ExperimentalAcrylicMaterial BackgroundSource="Digger" TintColor="Black" TintOpacity="1" MaterialOpacity="0.65"/>
-            </ExperimentalAcrylicBorder.Material>
-        </ExperimentalAcrylicBorder>
-    </Panel>
 
 </Window>

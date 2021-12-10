@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ReactiveUI;
-
-namespace PasswordStore.UI.ViewModels
+﻿namespace PasswordStore.UI.ViewModels
 {
+    using ReactiveUI;
+    
     public class ViewModelBase : ReactiveObject
     {
     }
