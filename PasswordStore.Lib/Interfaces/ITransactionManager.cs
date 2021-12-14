@@ -1,5 +1,8 @@
 ﻿namespace PasswordStore.Lib.Interfaces
 {
+    using System.Data;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Microsoft.EntityFrameworkCore.Storage;
 
     /// <summary>
@@ -10,7 +13,10 @@
         /// <summary>
         /// Открыть транзакцию
         /// </summary>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        /// <param name="isolationLevel">Уровень изоляции транзакции</param>
         /// <returns>Транзакция</returns>
-        IDbContextTransaction BeginTransaction();
+        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken,
+            IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
     }
 }

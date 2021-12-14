@@ -3,6 +3,8 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using CommandLine;
     using ConsoleTableExt;
     using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +17,8 @@
 
     public class ApplicationLifecycle
     {
+        private const int DefaultCancellationTimeoutMinutes = 1;
+        
         private const string SuccessfulAuthMessage = "Пользователь успешно аутентифицирован";
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -35,57 +39,49 @@
             this.userIdentity = serviceProvider.GetRequiredService<IUserIdentity>();
         }
 
-        public void Run()
+        public async Task RunAsync()
         {
-            this.SignIn();
-            this.RunMainCycle();
+            await this.SignIn();
+            await this.RunMainCycle();
         }
         
         /// <summary>
         /// Основной цикл работы приложения
         /// </summary>
-        private void RunMainCycle()
+        private async Task RunMainCycle()
         {
             var exit = false;
             while (!exit)
             {
                 Console.Write(">");
-                var args = Console.ReadLine().Split(' ');
-                var message = string.Empty;
+                var args = Console.ReadLine()!.Split(' ');
                 try
                 {
                     using (var scope = Application.ServiceProvider.CreateScope())
                     {
-                        message = Parser.Default
+                        var parseResult = Parser.Default
                             .ParseArguments<ListCredentials, FindPassword, AddCredential, UpdatePassword,
                                 DeleteCredential,
-                                ChangeMasterKey, Exit>(args)
-                            .MapResult<ListCredentials, FindPassword, AddCredential, UpdatePassword, DeleteCredential,
-                                ChangeMasterKey, Exit, string>(
-                                List,
-                                Find,
-                                Add,
-                                Update,
-                                Delete,
-                                ChangeMasterKey,
-                                _ =>
-                                {
-                                    Exit();
-                                    exit = true;
-                                    return null;
-                                },
-                                errors => string.Join(Environment.NewLine, errors));
+                                ChangeMasterKey, Exit>(args);
+                        await parseResult.WithParsedAsync<ListCredentials>(List);
+                        await parseResult.WithParsedAsync<FindPassword>(Find);
+                        await parseResult.WithParsedAsync<AddCredential>(Add);
+                        await parseResult.WithParsedAsync<UpdatePassword>(Update);
+                        await parseResult.WithParsedAsync<DeleteCredential>(Delete);
+                        await parseResult.WithParsedAsync<ChangeMasterKey>(ChangeMasterKey);
+                        parseResult.WithParsed<Exit>(_ =>
+                        {
+                            Exit();
+                            exit = true;
+                        });
+
+                        parseResult.WithNotParsed(errors => string.Join(Environment.NewLine, errors));
                     }
                 }
                 catch (Exception e)
                 {
                     logger.Error(e, e.Message);
-                    message = e.Message;
-                }
-
-                if (!string.IsNullOrEmpty(message))
-                {
-                    Console.WriteLine(message);
+                    Console.WriteLine(e.Message);
                 }
             }
         }
@@ -93,22 +89,23 @@
         /// <summary>
         /// Выполняет вход пользователя в приложение
         /// </summary>
-        private void SignIn()
+        private async Task SignIn()
         {
             Console.WriteLine("Необходимо выполнить вход в приложение");
             Console.Write("Логин: ");
             var login = Console.ReadLine();
-            var user = this.userService.FindUser(login);
+            var user = await this.userService.FindUserAsync(login);
             if (user == null)
             {
                 Console.WriteLine($"Пользователь с логином {login} не найден");
-                SignUp(login);
+                await this.SignUp(login);
             }
             else
             {
                 Console.Write($"Ключ доступа пользователя {login}: ");
                 var key = this.ReadPassword();
-                if (this.authService.Login(login, key))
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
+                if (await this.authService.LoginAsync(login, key, cts.Token))
                 {
                     Console.WriteLine(SuccessfulAuthMessage);
                 }
@@ -119,7 +116,7 @@
         /// Регистрирует нового пользователя
         /// </summary>
         /// <param name="login">Логин нового пользователя</param>
-        private void SignUp(string login)
+        private async Task SignUp(string login)
         {
             Console.WriteLine("Выполняется регистрация нового пользователя");
             Console.Write($"Ключ доступа для пользователя {login}: ");
@@ -132,8 +129,9 @@
                 return;
             }
             
-            this.userService.Register(login, key);
-            if (this.authService.Login(login, key))
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            await this.userService.RegisterAsync(login, key, cts.Token);
+            if (await this.authService.LoginAsync(login, key, cts.Token))
             {
                 Console.WriteLine(SuccessfulAuthMessage);
             }
@@ -142,28 +140,29 @@
         /// <summary>
         /// Обработчик команды вывода списка паролей
         /// </summary>
-        private string List(ListCredentials command)
+        private async Task List(ListCredentials command)
         {
             IList<Credential> data;
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
             if (string.IsNullOrEmpty(command.Filter))
             {
-                data = this.credentialService.ListAllCredentials();
+                data = await this.credentialService.ListAllCredentialsAsync(cts.Token);
             }
             else
             {
-                data = this.credentialService.FindByName(command.Filter, false);
+                data = await this.credentialService.FindByNameAsync(command.Filter, false, cts.Token);
             }
             
             PrintCredentials(data);
-            return null;
         }
 
         /// <summary>
         /// Обработчик команды поиска пароля
         /// </summary>
-        private string Find(FindPassword command)
+        private async Task Find(FindPassword command)
         {
-            var data = this.credentialService.FindByName(command.ServiceName, true);
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
+            var data = await this.credentialService.FindByNameAsync(command.ServiceName, true, cts.Token);
             if (!string.IsNullOrEmpty(command.Login))
             {
                 var filterValue = command.Login.ToLowerInvariant();
@@ -171,43 +170,46 @@
             }
             
             PrintCredentials(data);
-            return null;
         }
         
         /// <summary>
         /// Обработчик команды добавления пароля
         /// </summary>
-        private string Add(AddCredential command)
+        private async Task Add(AddCredential command)
         {
-            this.credentialService.AddCredential(command.ServiceName, command.Login, command.Password);
-            return "Данные сохранены";
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
+            await this.credentialService.AddCredentialAsync(command.ServiceName, command.Login, command.Password, cts.Token);
+            Console.WriteLine("Данные сохранены");
         }
         
         /// <summary>
         /// Обработчик команды обновления пароля
         /// </summary>
-        private string Update(UpdatePassword command)
+        private async Task Update(UpdatePassword command)
         {
-            this.credentialService.ChangePassword(command.ServiceName, command.Login, command.Password);
-            return "Пароль изменён";
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
+            await this.credentialService.ChangePasswordAsync(command.ServiceName, command.Login, command.Password,cts.Token);
+            Console.WriteLine("Пароль изменён");
         }
         
         /// <summary>
         /// Обработчик команды удаления пароля
         /// </summary>
-        private string Delete(DeleteCredential command)
+        private async Task Delete(DeleteCredential command)
         {
-            this.credentialService.RemoveCredential(command.ServiceName, command.Login);
-            return "Данные удалены";
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
+            await this.credentialService.RemoveCredentialAsync(command.ServiceName, command.Login, cts.Token);
+            Console.WriteLine("Данные удалены");
         }
         
         /// <summary>
         /// Обработчик команды смены ключа доступа
         /// </summary>
-        private string ChangeMasterKey(ChangeMasterKey command)
+        private async Task ChangeMasterKey(ChangeMasterKey command)
         {
-            this.credentialService.ChangeMasterKey(command.NewKey);
-            return "Данные изменены";
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+            await this.credentialService.ChangeMasterKeyAsync(command.NewKey, cts.Token);
+            Console.WriteLine("Данные изменены");
         }
 
         /// <summary>

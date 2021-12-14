@@ -1,5 +1,7 @@
 ﻿namespace PasswordStore.Lib.Interfaces
 {
+    using System.Threading;
+    using System.Threading.Tasks;
     using PasswordStore.Lib.Entities;
 
     /// <summary>
@@ -11,20 +13,23 @@
         /// Поиск пользователя по логину
         /// </summary>
         /// <param name="login">логин</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
         /// <returns>Найденный пользователь или null, если пользователь с логином не существует</returns>
-        User FindUser(string login);
+        Task<User> FindUserAsync(string login, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Регистрация нового пользователя
         /// </summary>
         /// <param name="login">Логин</param>
         /// <param name="key">Ключ доступа</param>
-        void Register(string login, string key);
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task RegisterAsync(string login, string key, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Удаляет пользователя
         /// </summary>
         /// <param name="login">Логин пользователя</param>
-        void RemoveUser(string login);
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task RemoveUserAsync(string login, CancellationToken cancellationToken = default);
     }
 }

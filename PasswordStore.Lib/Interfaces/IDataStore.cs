@@ -1,4 +1,7 @@
-﻿namespace PasswordStore.Lib.Interfaces
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace PasswordStore.Lib.Interfaces
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -13,18 +16,18 @@
     {
         IQueryable<TEntity> GetAll();
 
-        TEntity Get(long id);
+        Task<TEntity> GetAsync(long id, CancellationToken cancellationToken = default);
 
-        void Create(TEntity entity);
+        Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-        void Create(IEnumerable<TEntity> entities);
+        Task CreateAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default);
         
-        void Update(TEntity entity);
+        Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-        void Update(IEnumerable<TEntity> entities);
+        Task UpdateAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default);
 
-        void Delete(long entityId);
+        Task DeleteAsync(long entityId, CancellationToken cancellationToken = default);
 
-        void Delete(IEnumerable<long> entityIds);
+        Task DeleteAsync(ICollection<long> entityIds, CancellationToken cancellationToken = default);
     }
 }

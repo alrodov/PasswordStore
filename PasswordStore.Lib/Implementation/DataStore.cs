@@ -3,8 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Microsoft.EntityFrameworkCore;
-    using Microsoft.EntityFrameworkCore.Storage;
     using PasswordStore.Lib.Data;
     using PasswordStore.Lib.Entities;
     using PasswordStore.Lib.Interfaces;
@@ -26,50 +27,46 @@
             return this.dbSet.AsQueryable();
         }
 
-        public virtual TEntity Get(long id)
+        public virtual async Task<TEntity> GetAsync(long id, CancellationToken cancellationToken = default)
         {
-            return this.dbSet.SingleOrDefault(x => x.Id == id);
+            return await this.dbSet.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         }
 
-        public void Create(TEntity entity)
+        public async Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            this.Create(new [] { entity });
+            await this.CreateAsync(new [] { entity }, cancellationToken);
         }
 
-        public virtual void Create(IEnumerable<TEntity> entities)
+        public virtual async Task CreateAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
         {
-            foreach (var entity in entities)
-            {
-                this.dbSet.Add(entity);
-            }
-
-            this.dataContext.SaveChanges();
+            await this.dbSet.AddRangeAsync(entities, cancellationToken);
+            await this.dataContext.SaveChangesAsync(cancellationToken);
         }
 
-        public void Update(TEntity entity)
+        public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            this.Update(new [] { entity });
+            await this.UpdateAsync(new [] { entity }, cancellationToken);
         }
 
-        public virtual void Update(IEnumerable<TEntity> entities)
+        public virtual async Task UpdateAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
         {
             foreach (var entity in entities)
             {
                 this.dataContext.Entry(entity).State = EntityState.Modified;
             }
             
-            this.dataContext.SaveChanges();
+            await this.dataContext.SaveChangesAsync(cancellationToken);
         }
 
-        public void Delete(long entityId)
+        public async Task DeleteAsync(long entityId, CancellationToken cancellationToken = default)
         {
-            this.Delete(new [] { entityId });
+            await this.DeleteAsync(new [] { entityId }, cancellationToken);
         }
 
-        public virtual void Delete(IEnumerable<long> entityIds)
+        public virtual async Task DeleteAsync(ICollection<long> entityIds, CancellationToken cancellationToken = default)
         {
             this.dbSet.RemoveRange(this.GetAll().Where(x => entityIds.Contains(x.Id)));
-            this.dataContext.SaveChanges();
+            await this.dataContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

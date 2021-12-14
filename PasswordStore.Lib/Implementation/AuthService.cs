@@ -1,8 +1,9 @@
 ﻿namespace PasswordStore.Lib.Implementation
 {
     using System;
-    using System.Linq;
-    using Microsoft.Extensions.DependencyInjection;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.EntityFrameworkCore;
     using PasswordStore.Lib.Crypto;
     using PasswordStore.Lib.Entities;
     using PasswordStore.Lib.Interfaces;
@@ -19,16 +20,16 @@
             this.userStore = userStore;
         }
         
-        public bool Login(string userName, string masterKey)
+        public async Task<bool> LoginAsync(string userName, string masterKey, CancellationToken cancellationToken = default)
         {
-            var user = this.userStore.GetAll().FirstOrDefault(x => x.Login == userName);
+            var user = await this.userStore.GetAll().FirstOrDefaultAsync(x => x.Login == userName, cancellationToken);
             if (user == null)
             {
                 this.ThrowAuthError();
             }
             
             var keyHash = CryptographyUtils.GetKeyHash(masterKey);
-            if (keyHash != user.MasterKey)
+            if (keyHash != user!.MasterKey)
             {
                 this.ThrowAuthError();
             }

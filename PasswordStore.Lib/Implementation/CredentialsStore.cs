@@ -3,6 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.EntityFrameworkCore;
     using PasswordStore.Lib.Data;
     using PasswordStore.Lib.Entities;
     using PasswordStore.Lib.Interfaces;
@@ -27,7 +30,7 @@
             return base.GetAll().Where(x => x.UserId == userId);
         }
 
-        public override Credential Get(long id)
+        public override async Task<Credential> GetAsync(long id, CancellationToken cancellationToken = default)
         {
             var userId = this.userIdentity.GetUserId();
             if (!userId.HasValue)
@@ -35,29 +38,29 @@
                 return null;
             }
 
-            return this.dbSet.SingleOrDefault(x => x.Id == id && x.UserId == userId);
+            return await this.dbSet.SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
         }
 
-        public override void Create(IEnumerable<Credential> entities)
+        public override async Task CreateAsync(ICollection<Credential> entities, CancellationToken cancellationToken = default)
         {
             this.ThrowIfNotAuthorized();
             var credentials = entities.ToList();
             this.ThrowIfNotOwner(credentials);
             
-            base.Create(credentials);
+            await base.CreateAsync(credentials, cancellationToken);
         }
 
-        public override void Update(IEnumerable<Credential> entities)
+        public override async Task UpdateAsync(ICollection<Credential> entities, CancellationToken cancellationToken = default)
         {
             this.ThrowIfNotAuthorized();
             
             var credentials = entities.ToList();
             this.ThrowIfNotOwner(credentials);
             
-            base.Update(credentials);
+            await base.UpdateAsync(credentials, cancellationToken);
         }
 
-        public override void Delete(IEnumerable<long> entityIds)
+        public override async Task DeleteAsync(ICollection<long> entityIds, CancellationToken cancellationToken = default)
         {
             this.ThrowIfNotAuthorized();
 
@@ -72,7 +75,7 @@
                 throw new Exception("Невозможно выполнить удаление данных. Одна или несколько записей не принадлежит текущему пользователю.");
             }
             
-            base.Delete(idsList);
+            await base.DeleteAsync(idsList, cancellationToken);
         }
 
         /// <summary>
