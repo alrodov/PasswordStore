@@ -50,11 +50,7 @@
 
         public virtual async Task UpdateAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
         {
-            foreach (var entity in entities)
-            {
-                this.dataContext.Entry(entity).State = EntityState.Modified;
-            }
-            
+            this.dbSet.UpdateRange(entities);
             await this.dataContext.SaveChangesAsync(cancellationToken);
         }
 
