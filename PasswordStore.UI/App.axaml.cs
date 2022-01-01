@@ -12,6 +12,8 @@ namespace PasswordStore.UI
 {
     public class App : Application
     {
+        public const int DefaultTimeoutMilliseconds = 120000;
+        
         private static Logger logger = LogManager.GetCurrentClassLogger();
         public override void Initialize()
         {

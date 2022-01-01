@@ -34,8 +34,7 @@
                     if (authResult.Success)
                     {
                         success = true;
-                        // TODO switch to main screen
-                        this.Content = this;
+                        this.SwitchToMainView();
                     }
                     else if (authResult.SignUpRequested)
                     {
@@ -65,6 +64,12 @@
                         this.RequestAuthorization(result.Message);
                     }
                 });
+            this.Content = vm;
+        }
+
+        private void SwitchToMainView()
+        {
+            var vm = new PasswordGridViewModel(this.serviceProvider);
             this.Content = vm;
         }
     }
