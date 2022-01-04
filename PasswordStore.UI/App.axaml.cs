@@ -10,11 +10,19 @@ using PasswordStore.UI.Views;
 
 namespace PasswordStore.UI
 {
+    using Avalonia.Controls;
+
     public class App : Application
     {
         public const int DefaultTimeoutMilliseconds = 120000;
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        public Window? MainWindow =>
+            ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
         public override void Initialize()
         {
             var config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())

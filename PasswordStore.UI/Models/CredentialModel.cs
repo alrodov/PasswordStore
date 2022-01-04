@@ -11,5 +11,7 @@
         public string Login { get; set; }
         
         public string Password { get; set; }
+        
+        public string OpenPassword { get; set; }
     }
 }

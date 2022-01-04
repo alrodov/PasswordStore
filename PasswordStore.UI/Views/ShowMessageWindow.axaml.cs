@@ -4,20 +4,26 @@ using Avalonia.Markup.Xaml;
 
 namespace PasswordStore.UI.Views
 {
-    using System;
-    using System.Threading.Tasks;
     using Avalonia.Interactivity;
 
-    public class PasswordGridView : UserControl
+    public class ShowMessageWindow : Window
     {
-        public PasswordGridView()
+        public ShowMessageWindow()
         {
             InitializeComponent();
+#if DEBUG
+            this.AttachDevTools();
+#endif
         }
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+        }
+
+        private void OkButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

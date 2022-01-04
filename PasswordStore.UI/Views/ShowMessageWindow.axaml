@@ -1,0 +1,39 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:PasswordStore.UI.ViewModels"
+        mc:Ignorable="d"
+        x:Class="PasswordStore.UI.Views.ShowMessageWindow"
+        Title="Пароль"
+        TransparencyLevelHint="Blur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="30"
+        Width="400"
+        Height="150"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    
+    <Design.DataContext>
+        <viewModels:ShowMessageViewModel/>
+    </Design.DataContext>
+    <Panel VerticalAlignment="Stretch">
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial BackgroundSource="Digger" TintColor="Black" TintOpacity="1" MaterialOpacity="0.65"/>
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+        <DockPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <Button Content="OK" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Margin="10" Click="OkButton_OnClick"/>
+            <TextBlock
+                FontFamily="Calibri"
+                FontSize="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                TextAlignment="Center"
+                TextWrapping="Wrap"
+                Text="{Binding Message}"/>
+        </DockPanel>
+    </Panel>
+</Window>
