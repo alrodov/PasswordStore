@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Reactive;
+    using System.Reactive.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
@@ -51,22 +52,32 @@
         
         public ReactiveCommand<CredentialModel, Unit> CopyToClipboard { get; private set; }
 
+        public ReactiveCommand<Unit, Unit> Add { get; private set; }
+        
         public ReactiveCommand<CredentialModel, Unit> Edit { get; private set; }
         
         public ReactiveCommand<CredentialModel, Unit> Remove { get; private set; }
+        
+        public Interaction<CredentialFormViewModel, CredentialModel> AddCredential { get; set; }
+        
+        public Interaction<CredentialFormViewModel, CredentialModel> EditCredential { get; set; }
 
         private void InitCommands()
         {
             this.LoadData = ReactiveCommand.CreateFromTask(DoLoadData);
             this.ShowPassword = ReactiveCommand.CreateFromTask<CredentialModel>(DoShowPassword);
             this.CopyToClipboard = ReactiveCommand.CreateFromTask<CredentialModel>(DoCopyPasswordToClipboard);
+            this.Add = ReactiveCommand.CreateFromTask(DoAdd);
             this.Edit = ReactiveCommand.CreateFromTask<CredentialModel>(DoEdit);
             this.Remove = ReactiveCommand.CreateFromTask<CredentialModel>(DoRemove);
+
+            this.EditCredential = new Interaction<CredentialFormViewModel, CredentialModel>();
+            this.AddCredential = new Interaction<CredentialFormViewModel, CredentialModel>();
         }
 
         private async Task DoLoadData()
         {
-            var key = this.userIdentity.GetUserKey();
+            // TODO show mask
             var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
             var data = await credentialService.ListAllCredentialsAsync(cts.Token);
             this.Credentials = data.Select(cr => new CredentialModel
@@ -80,7 +91,57 @@
 
         private async Task DoEdit(CredentialModel record)
         {
+            if (string.IsNullOrWhiteSpace(record.OpenPassword))
+            {
+                record.OpenPassword = CryptographyUtils.Decrypt(userIdentity.GetUserKey(), record.Password);
+            }
             
+            var editedData = await EditCredential.Handle(new CredentialFormViewModel
+            {
+                DataOperationName = "Редактирование данных",
+                Data = record
+            }).FirstOrDefaultAsync();
+
+            if (editedData != null)
+            {
+                // TODO show mask
+                try
+                {
+                    var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
+                    await this.credentialService.EditCredentialAsync(editedData.Id, editedData.ServiceName,
+                        editedData.Login, editedData.OpenPassword, cts.Token);
+                    await this.DoLoadData();
+                }
+                catch (Exception e)
+                {
+                    await this.ShowMessageWindow($"Произошла ошибка при сохранении данных: {e.Message}");
+                }
+            }
+        }
+
+        private async Task DoAdd()
+        {
+            var addedData = await AddCredential.Handle(new CredentialFormViewModel
+            {
+                DataOperationName = "Добавление данных",
+                Data = new CredentialModel()
+            }).FirstOrDefaultAsync();
+
+            if (addedData != null)
+            {
+                try
+                {
+                    // TODO show mask
+                    var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
+                    await this.credentialService.AddCredentialAsync(addedData.ServiceName,
+                        addedData.Login, addedData.OpenPassword, cts.Token);
+                    await this.DoLoadData();
+                }
+                catch (Exception e)
+                {
+                    await this.ShowMessageWindow($"Произошла ошибка при сохранении данных: {e.Message}");
+                }
+            }
         }
 
         private async Task DoRemove(CredentialModel record)

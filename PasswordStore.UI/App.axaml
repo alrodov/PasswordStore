@@ -42,5 +42,17 @@
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="Margin" Value="5 3"/>
         </Style>
+        
+        <Style Selector="TextBox.dataBox">
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Margin" Value="5 3"/>
+        </Style>
+        
+        <Style Selector="Label.dataLabel">
+            <Setter Property="FontFamily" Value="Calibri"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Margin" Value="5 3"/>
+        </Style>
     </Application.Styles>
 </Application>
