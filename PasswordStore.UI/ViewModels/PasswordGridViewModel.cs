@@ -61,6 +61,8 @@
         public Interaction<CredentialFormViewModel, CredentialModel> AddCredential { get; set; }
         
         public Interaction<CredentialFormViewModel, CredentialModel> EditCredential { get; set; }
+        
+        public Interaction<ConfirmationDialogViewModel, bool?> ConfirmRemoveCredential { get; set; }
 
         private void InitCommands()
         {
@@ -73,6 +75,7 @@
 
             this.EditCredential = new Interaction<CredentialFormViewModel, CredentialModel>();
             this.AddCredential = new Interaction<CredentialFormViewModel, CredentialModel>();
+            this.ConfirmRemoveCredential = new Interaction<ConfirmationDialogViewModel, bool?>();
         }
 
         private async Task DoLoadData()
@@ -146,7 +149,26 @@
 
         private async Task DoRemove(CredentialModel record)
         {
-            
+            var confirmation = await ConfirmRemoveCredential.Handle(new ConfirmationDialogViewModel
+            {
+                OperationName = "Удаление записи",
+                ConfirmationText = $"Вы уверены, что хотите удалить пароль для сервиса {record.ServiceName}?"
+            }).FirstOrDefaultAsync();
+
+            if (confirmation == true)
+            {
+                try
+                {
+                    // TODO show mask
+                    var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
+                    await this.credentialService.RemoveCredentialAsync(record.Id, cts.Token);
+                    await this.DoLoadData();
+                }
+                catch (Exception e)
+                {
+                    await this.ShowMessageWindow($"Произошла ошибка при удалении: {e.Message}");
+                }
+            }
         }
 
         private async Task DoCopyPasswordToClipboard(CredentialModel record)

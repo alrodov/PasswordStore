@@ -142,6 +142,11 @@
             await this.credentialStore.DeleteAsync(ids, cancellationToken);
         }
 
+        public async Task RemoveCredentialAsync(long id, CancellationToken cancellationToken = default)
+        {
+            await this.credentialStore.DeleteAsync(id, cancellationToken);
+        }
+
         public async Task ChangeMasterKeyAsync(string newKey, CancellationToken cancellationToken = default)
         {
             var userId = this.userIdentity.GetUserId()!.Value;

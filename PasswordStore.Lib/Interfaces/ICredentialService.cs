@@ -73,6 +73,13 @@
         /// <param name="login">Логин учётной записи, от которой удаляется пароль</param>
         /// <param name="cancellationToken">Маркер отмены операции</param>
         Task RemoveCredentialAsync(string serviceName, string login = null, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Удаляет пароль
+        /// </summary>
+        /// <param name="id">Id удаляемой записи</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task RemoveCredentialAsync(long id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Изменяет ключ доступа пользователя с выполнением перешифровки всех паролей

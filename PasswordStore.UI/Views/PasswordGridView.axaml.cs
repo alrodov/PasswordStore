@@ -17,6 +17,7 @@
 
             this.WhenActivated(d => d(ViewModel!.AddCredential.RegisterHandler(ShowEditDialog)));
             this.WhenActivated(d => d(ViewModel!.EditCredential.RegisterHandler(ShowEditDialog)));
+            this.WhenActivated(d => d(ViewModel!.ConfirmRemoveCredential.RegisterHandler(ShowConfirmDialog)));
         }
 
         private void InitializeComponent()
@@ -33,6 +34,17 @@
             };
 
             var result = await dialog.ShowDialog<CredentialModel>(((App)Application.Current).MainWindow);
+            interactionContext.SetOutput(result);
+        }
+
+        private async Task ShowConfirmDialog(InteractionContext<ConfirmationDialogViewModel, bool?> interactionContext)
+        {
+            var dialog = new ConfirmationDialogWindow
+            {
+                DataContext = interactionContext.Input
+            };
+
+            var result = await dialog.ShowDialog<bool?>(((App)Application.Current).MainWindow);
             interactionContext.SetOutput(result);
         }
     }
