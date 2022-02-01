@@ -23,7 +23,6 @@
         <Style Selector="TextBlock.errorText">
             <Setter Property="FontFamily" Value="Calibri"/>
             <Setter Property="FontSize" Value="20"/>
-            <Setter Property="Foreground" Value="Red"/>
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>

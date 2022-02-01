@@ -1,10 +1,12 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-
-namespace PasswordStore.UI.Views
+﻿namespace PasswordStore.UI.Views
 {
-    public class SignUpView : UserControl
+    using System.Reactive.Linq;
+    using Avalonia.Input;
+    using Avalonia.Markup.Xaml;
+    using Avalonia.ReactiveUI;
+    using PasswordStore.UI.ViewModels;
+
+    public class SignUpView : ReactiveUserControl<SignUpViewModel>
     {
         public SignUpView()
         {
@@ -14,6 +16,14 @@ namespace PasswordStore.UI.Views
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+        }
+
+        private async void MainPanel_OnKeyUp(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                await this.ViewModel.Register.Execute();
+            }
         }
     }
 }

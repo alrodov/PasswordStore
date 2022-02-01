@@ -25,7 +25,7 @@
         private void RequestAuthorization(string? message = null)
         {
             var vm = new LoginViewModel(serviceProvider);
-            vm.Message = message;
+            vm.SetMessage(message, true);
             var success = false;
             vm.DoLogin.Merge(vm.RequestSignUp)
                 .TakeWhile(_ => !success)
@@ -42,7 +42,7 @@
                     }
                     else
                     {
-                        vm.Message = authResult.Message;
+                        vm.SetMessage(authResult.Message, false);
                     }
                 });
 

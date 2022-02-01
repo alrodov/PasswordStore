@@ -9,7 +9,7 @@
         <viewModels:SignUpViewModel/>
     </Design.DataContext>
     
-    <Panel>
+    <Panel KeyUp="MainPanel_OnKeyUp">
         <ExperimentalAcrylicBorder IsHitTestVisible="False">
             <ExperimentalAcrylicBorder.Material>
                 <ExperimentalAcrylicMaterial BackgroundSource="Digger" TintColor="Black" TintOpacity="1" MaterialOpacity="0.65"/>
@@ -61,6 +61,7 @@
                 <TextBlock
                     Name="MessageBlock"
                     Classes="errorText"
+                    Foreground="Red"
                     Text="{Binding Message}"
                     HorizontalAlignment="Stretch"
                     Margin="5 20"/>

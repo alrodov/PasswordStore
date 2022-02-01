@@ -10,7 +10,7 @@
         <viewModels:LoginViewModel/>
     </Design.DataContext>
     
-    <Panel>
+    <Panel KeyUp="LoginView_OnKeyUp">
         <ExperimentalAcrylicBorder IsHitTestVisible="False">
             <ExperimentalAcrylicBorder.Material>
                 <ExperimentalAcrylicMaterial BackgroundSource="Digger" TintColor="Black" TintOpacity="1" MaterialOpacity="0.65"/>
@@ -55,6 +55,7 @@
                     Name="MessageBlock"
                     Classes="errorText"
                     Text="{Binding Message}"
+                    Foreground="{Binding MessageColor}"
                     HorizontalAlignment="Stretch"
                     Margin="5 20"/>
             </StackPanel>

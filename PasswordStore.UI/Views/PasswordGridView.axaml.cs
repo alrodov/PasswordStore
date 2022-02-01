@@ -1,6 +1,5 @@
 ﻿namespace PasswordStore.UI.Views
 {
-    using System;
     using System.Threading.Tasks;
     using Avalonia;
     using Avalonia.Markup.Xaml;

@@ -24,6 +24,8 @@
         private readonly IUserIdentity userIdentity;
         private ICollection<CredentialModel> credentials;
         private object selectedItem;
+        private bool mainViewEnabled;
+        private bool maskVisible;
 
         public PasswordGridViewModel(IServiceProvider serviceProvider)
         {
@@ -46,6 +48,18 @@
             set => this.RaiseAndSetIfChanged(ref selectedItem, value);
         }
 
+        public bool MainViewEnabled
+        {
+            get => mainViewEnabled;
+            set => this.RaiseAndSetIfChanged(ref mainViewEnabled, value);
+        }
+
+        public bool MaskVisible
+        {
+            get => maskVisible;
+            set => this.RaiseAndSetIfChanged(ref maskVisible, value);
+        }
+
         public ReactiveCommand<Unit, Unit> LoadData { get; private set; }
         
         public ReactiveCommand<CredentialModel, Unit> ShowPassword { get; private set; }
@@ -63,7 +77,7 @@
         public Interaction<CredentialFormViewModel, CredentialModel> EditCredential { get; set; }
         
         public Interaction<ConfirmationDialogViewModel, bool?> ConfirmRemoveCredential { get; set; }
-
+        
         private void InitCommands()
         {
             this.LoadData = ReactiveCommand.CreateFromTask(DoLoadData);
@@ -80,7 +94,8 @@
 
         private async Task DoLoadData()
         {
-            // TODO show mask
+            this.Credentials = new List<CredentialModel>();
+            this.Mask();
             var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
             var data = await credentialService.ListAllCredentialsAsync(cts.Token);
             this.Credentials = data.Select(cr => new CredentialModel
@@ -90,6 +105,8 @@
                 Login = cr.Login,
                 Password = cr.Password
             }).ToList();
+
+            this.Unmask();
         }
 
         private async Task DoEdit(CredentialModel record)
@@ -107,7 +124,7 @@
 
             if (editedData != null)
             {
-                // TODO show mask
+                this.Mask();
                 try
                 {
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
@@ -118,6 +135,10 @@
                 catch (Exception e)
                 {
                     await this.ShowMessageWindow($"Произошла ошибка при сохранении данных: {e.Message}");
+                }
+                finally
+                {
+                    this.Unmask();
                 }
             }
         }
@@ -134,7 +155,7 @@
             {
                 try
                 {
-                    // TODO show mask
+                    this.Mask();
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
                     await this.credentialService.AddCredentialAsync(addedData.ServiceName,
                         addedData.Login, addedData.OpenPassword, cts.Token);
@@ -143,6 +164,10 @@
                 catch (Exception e)
                 {
                     await this.ShowMessageWindow($"Произошла ошибка при сохранении данных: {e.Message}");
+                }
+                finally
+                {
+                    this.Unmask();
                 }
             }
         }
@@ -159,7 +184,7 @@
             {
                 try
                 {
-                    // TODO show mask
+                    this.Mask();
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
                     await this.credentialService.RemoveCredentialAsync(record.Id, cts.Token);
                     await this.DoLoadData();
@@ -167,6 +192,10 @@
                 catch (Exception e)
                 {
                     await this.ShowMessageWindow($"Произошла ошибка при удалении: {e.Message}");
+                }
+                finally
+                {
+                    this.Unmask();
                 }
             }
         }
@@ -212,6 +241,18 @@
             var dialog = await ShowMessageWindow(message, false);
             await Task.Delay(1000);
             dialog.Close();
+        }
+
+        private void Mask()
+        {
+            this.MainViewEnabled = false;
+            this.MaskVisible = true;
+        }
+
+        private void Unmask()
+        {
+            this.MaskVisible = false;
+            this.MainViewEnabled = true;
         }
     }
 }
