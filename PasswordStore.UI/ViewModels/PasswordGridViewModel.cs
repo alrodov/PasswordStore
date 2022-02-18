@@ -130,8 +130,8 @@
                 try
                 {
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-                    await this.credentialService.EditCredentialAsync(editedData.Id, editedData.ServiceName,
-                        editedData.Login, editedData.OpenPassword, cts.Token);
+                    await Task.Run(async () => await this.credentialService.EditCredentialAsync(editedData.Id, editedData.ServiceName,
+                        editedData.Login, editedData.OpenPassword, cts.Token), cts.Token);
                     await this.DoLoadData();
                 }
                 catch (Exception e)
@@ -159,8 +159,8 @@
                 {
                     this.Mask();
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-                    await this.credentialService.AddCredentialAsync(addedData.ServiceName,
-                        addedData.Login, addedData.OpenPassword, cts.Token);
+                    await Task.Run(async () => await this.credentialService.AddCredentialAsync(addedData.ServiceName,
+                        addedData.Login, addedData.OpenPassword, cts.Token), cts.Token);
                     await this.DoLoadData();
                 }
                 catch (Exception e)
@@ -188,7 +188,7 @@
                 {
                     this.Mask();
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-                    await this.credentialService.RemoveCredentialAsync(record.Id, cts.Token);
+                    await Task.Run(async () => await this.credentialService.RemoveCredentialAsync(record.Id, cts.Token), cts.Token);
                     await this.DoLoadData();
                 }
                 catch (Exception e)

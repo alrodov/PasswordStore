@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 
 namespace PasswordStore.UI.Views
 {
+    using Avalonia.Input;
     using Avalonia.Interactivity;
 
     public class ShowMessageWindow : Window
@@ -24,6 +25,14 @@ namespace PasswordStore.UI.Views
         private void OkButton_OnClick(object? sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void MessageWindow_OnKeyUp(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Escape)
+            {
+                this.Close();
+            }
         }
     }
 }
