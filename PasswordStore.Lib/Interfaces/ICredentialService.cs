@@ -13,7 +13,10 @@
         /// <summary>
         /// Возвращает список паролей
         /// </summary>
-        Task<IList<Credential>> ListAllCredentialsAsync(CancellationToken cancellationToken = default);
+        /// <param name="filter">Фильтр (не обязательно)</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        /// <returns>Список найденных паролей</returns>
+        Task<IList<Credential>> ListCredentialsAsync(string filter = null, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Поиск паролей

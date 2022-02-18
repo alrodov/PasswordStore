@@ -34,9 +34,17 @@
             this.userStore = userStore;
         }
     
-        public async Task<IList<Credential>> ListAllCredentialsAsync(CancellationToken cancellationToken = default)
+        public async Task<IList<Credential>> ListCredentialsAsync(string filterValue, CancellationToken cancellationToken = default)
         {
-            return await this.credentialStore.GetAll().ToListAsync(cancellationToken);
+            var query = this.credentialStore.GetAll();
+            if (!string.IsNullOrEmpty(filterValue))
+            {
+                var searchPattern = $"%{filterValue.ToLower()}%";
+                query = query.Where(item =>
+                    EF.Functions.Like(item.Login.ToLower(), searchPattern) || EF.Functions.Like(item.ServiceName.ToLower(), searchPattern));
+            }
+            
+            return await query.ToListAsync(cancellationToken);
         }
 
         public async Task<IList<Credential>> FindByNameAsync(string name, bool matchExactly, CancellationToken cancellationToken = default)

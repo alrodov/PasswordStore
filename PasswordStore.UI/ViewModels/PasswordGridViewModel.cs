@@ -26,7 +26,9 @@
         private bool maskVisible;
         private string currentSortingProperty = string.Empty;
         private bool? ascSortOrder = null;
-
+        private string filterValue = string.Empty;
+        private bool clearFilterEnabled = false;
+        
         public PasswordGridViewModel(IServiceProvider serviceProvider)
         {
             this.credentialService = serviceProvider.GetRequiredService<ICredentialService>();
@@ -60,6 +62,25 @@
             set => this.RaiseAndSetIfChanged(ref maskVisible, value);
         }
 
+        public string FilterValue
+        {
+            get => filterValue;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref filterValue, value);
+                ClearFilterEnabled = !string.IsNullOrEmpty(filterValue);
+                FilterSet(value);
+            }
+        }
+
+        public bool ClearFilterEnabled
+        {
+            get => clearFilterEnabled;
+            set => this.RaiseAndSetIfChanged(ref clearFilterEnabled, value);
+        }
+
+        public ReactiveCommand<Unit, Unit> ClearFilter { get; private set; }
+        
         public ReactiveCommand<Unit, Unit> LoadData { get; private set; }
         
         public ReactiveCommand<CredentialModel, Unit> ShowPassword { get; private set; }
@@ -80,6 +101,7 @@
         
         private void InitCommands()
         {
+            this.ClearFilter = ReactiveCommand.CreateFromTask(DoClearFilter);
             this.LoadData = ReactiveCommand.CreateFromTask(DoLoadData);
             this.ShowPassword = ReactiveCommand.CreateFromTask<CredentialModel>(DoShowPassword);
             this.CopyToClipboard = ReactiveCommand.CreateFromTask<CredentialModel>(DoCopyPasswordToClipboard);
@@ -92,12 +114,18 @@
             this.ConfirmRemoveCredential = new Interaction<ConfirmationDialogViewModel, bool?>();
         }
 
+        private async Task DoClearFilter()
+        {
+            FilterValue = string.Empty;
+            ClearFilterEnabled = false;
+        }
+        
         private async Task DoLoadData()
         {
             this.Credentials = new List<CredentialModel>();
             this.Mask();
             var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-            var data = await credentialService.ListAllCredentialsAsync(cts.Token);
+            var data = await Task.Run(async () => await credentialService.ListCredentialsAsync(this.filterValue, cts.Token), cts.Token);
             var counter = 1;
             this.Credentials = data.Select(cr => new CredentialModel
             {
@@ -248,6 +276,21 @@
             {
                 credential.OrderNumber = counter++;
             }
+        }
+
+        private async Task FilterSet(string setValue)
+        {
+            if (!string.IsNullOrEmpty(setValue))
+            {
+                await Task.Delay(1000);
+            }
+            
+            if (filterValue != setValue)
+            {
+                return;
+            }
+
+            await this.DoLoadData();
         }
 
         private async Task<ShowMessageWindow> ShowMessageWindow(string message, bool isDialog = true)
