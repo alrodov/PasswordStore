@@ -7,12 +7,10 @@
     using System.Reactive.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Windows;
     using Avalonia;
-    using Avalonia.Controls;
-    using Avalonia.Controls.Primitives;
     using Microsoft.Extensions.DependencyInjection;
     using PasswordStore.Lib.Crypto;
+    using PasswordStore.Lib.Extension;
     using PasswordStore.Lib.Interfaces;
     using PasswordStore.UI.Models;
     using PasswordStore.UI.Views;
@@ -26,6 +24,8 @@
         private object selectedItem;
         private bool mainViewEnabled;
         private bool maskVisible;
+        private string currentSortingProperty = string.Empty;
+        private bool? ascSortOrder = null;
 
         public PasswordGridViewModel(IServiceProvider serviceProvider)
         {
@@ -98,9 +98,11 @@
             this.Mask();
             var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
             var data = await credentialService.ListAllCredentialsAsync(cts.Token);
+            var counter = 1;
             this.Credentials = data.Select(cr => new CredentialModel
             {
                 Id = cr.Id,
+                OrderNumber = counter++,
                 ServiceName = cr.ServiceName,
                 Login = cr.Login,
                 Password = cr.Password
@@ -211,6 +213,41 @@
         {
             var password = CryptographyUtils.Decrypt(userIdentity.GetUserKey(), record.Password);
             await this.ShowMessageWindow($"Пароль: {password}");
+        }
+
+        internal void EnumerateData(string? columnName = null)
+        {
+            var propertyName = typeof(CredentialModel).GetProperties()
+                .Where(prop => prop.GetDisplayName()?.Equals(columnName, StringComparison.InvariantCultureIgnoreCase) == true)
+                .Select(p => p.Name)
+                .FirstOrDefault();
+            Func<CredentialModel, object> propSelector = propertyName switch
+            {
+                nameof(CredentialModel.Login) => record => record.Login,
+                nameof(CredentialModel.ServiceName) => record => record.ServiceName,
+                _ => record => record.Id
+            };
+
+            IEnumerable<CredentialModel> enumeration;
+            if (currentSortingProperty.Equals(propertyName))
+            {
+                enumeration = ascSortOrder == true
+                    ? credentials.OrderBy(propSelector)
+                    : credentials.OrderByDescending(propSelector);
+                ascSortOrder = ascSortOrder != true;
+            }
+            else
+            {
+                enumeration = credentials.OrderBy(propSelector);
+                currentSortingProperty = propertyName ?? string.Empty;
+                ascSortOrder = true;
+            }
+
+            var counter = 1;
+            foreach (var credential in enumeration)
+            {
+                credential.OrderNumber = counter++;
+            }
         }
 
         private async Task<ShowMessageWindow> ShowMessageWindow(string message, bool isDialog = true)

@@ -2,6 +2,8 @@
 {
     using System.Threading.Tasks;
     using Avalonia;
+    using Avalonia.Controls;
+    using Avalonia.Input;
     using Avalonia.Markup.Xaml;
     using Avalonia.ReactiveUI;
     using PasswordStore.UI.Models;
@@ -45,6 +47,11 @@
 
             var result = await dialog.ShowDialog<bool?>(((App)Application.Current).MainWindow);
             interactionContext.SetOutput(result);
+        }
+
+        private void PasswordsGrid_OnSorting(object? sender, DataGridColumnEventArgs e)
+        {
+            //this.ViewModel.EnumerateData(e.Column.Header?.ToString());
         }
     }
 }
