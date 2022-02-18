@@ -1,5 +1,6 @@
 ﻿namespace PasswordStore.Lib.Entities
 {
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
 
     /// <summary>
@@ -20,5 +21,7 @@
         [Required]
         [Display(Name = "Ключ доступа")]
         public string MasterKey { get; set; }
+        
+        public ICollection<Credential> Credentials { get; set; }
     }
 }

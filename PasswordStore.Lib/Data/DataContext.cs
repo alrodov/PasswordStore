@@ -26,6 +26,12 @@
             modelBuilder.Entity<Credential>()
                 .HasIndex(nameof(Credential.ServiceName), nameof(Credential.Login), nameof(Credential.UserId))
                 .IsUnique();
+
+            modelBuilder.Entity<Credential>().HasOne(e => e.User).WithMany(u => u.Credentials)
+                .HasForeignKey(e => e.UserId);
+            
+            modelBuilder.Entity<SecretQuestion>().HasOne(e => e.Credential).WithMany(e => e.SecretQuestions)
+                .HasForeignKey(e => e.CredentialId);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
