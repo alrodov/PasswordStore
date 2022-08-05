@@ -64,7 +64,13 @@
         
         [ForeignKey(nameof(UserId))]
         public User User { get; set; }
+
+        public ICollection<SecretQuestion> SecretQuestions { get; set; } = new List<SecretQuestion>();
         
-        public ICollection<SecretQuestion> SecretQuestions { get; set; }
+        /// <summary>
+        /// Открытый пароль (не хранимое поле)
+        /// </summary>
+        [NotMapped]
+        public string OpenPassword { get; set; }
     }
 }

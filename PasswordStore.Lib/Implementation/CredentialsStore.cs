@@ -38,7 +38,9 @@
                 return null;
             }
 
-            return await this.dbSet.SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
+            return await this.dbSet
+                .Include(x => x.SecretQuestions)
+                .SingleOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken);
         }
 
         public override async Task CreateAsync(ICollection<Credential> entities, CancellationToken cancellationToken = default)

@@ -146,7 +146,7 @@
             using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(DefaultCancellationTimeoutMinutes));
             if (string.IsNullOrEmpty(command.Filter))
             {
-                data = await this.credentialService.ListAllCredentialsAsync(cts.Token);
+                data = await this.credentialService.ListAllCredentialsAsync(cancellationToken: cts.Token);
             }
             else
             {

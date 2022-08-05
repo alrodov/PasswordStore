@@ -34,6 +34,30 @@
         Task AddCredentialAsync(string serviceName, string login, string password, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Добавляет новую запись учётных данных
+        /// </summary>
+        /// <param name="credential">Новая запись</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Редактирует сохраненную запись
+        /// </summary>
+        /// <param name="id">id Записи</param>
+        /// <param name="serviceName">Имя сервиса, к которому относится пароль</param>
+        /// <param name="login">Логин учётной записи</param>
+        /// <param name="password">Пароль (в открытом виде)</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task EditCredentialAsync(long id, string serviceName, string login, string password, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Редактирует сохраненную запись
+        /// </summary>
+        /// <param name="credential">Данные записи</param>
+        /// <param name="cancellationToken">Маркер отмены операции</param>
+        Task EditCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Изменяет значение пароля
         /// </summary>
         /// <param name="serviceName">Имя сервиса, к которому относится пароль</param>

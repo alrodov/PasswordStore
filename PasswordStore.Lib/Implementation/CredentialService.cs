@@ -14,6 +14,7 @@
     {
         private IDataStore<Credential> credentialStore;
         private IDataStore<User> userStore;
+        private IDataStore<SecretQuestion> questionStore;
 
         private IUserIdentity userIdentity;
 
@@ -23,11 +24,13 @@
             ITransactionManager transactionManager,
             IDataStore<Credential> credentialStore,
             IDataStore<User> userStore,
+            IDataStore<SecretQuestion> questionStore,
             IUserIdentity userIdentity)
         {
             this.transactionManager = transactionManager;
-            this.credentialStore = credentialStore;
             this.userIdentity = userIdentity;
+            this.credentialStore = credentialStore;
+            this.questionStore = questionStore;
             this.userStore = userStore;
         }
     
@@ -47,24 +50,34 @@
 
         public async Task AddCredentialAsync(string serviceName, string login, string password, CancellationToken cancellationToken = default)
         {
-            var lowerLogin = login.ToLowerInvariant();
-            var existingCredential = await this.FindCredential(serviceName, lowerLogin, cancellationToken);
-            if (existingCredential != null)
+            await InternalAdd(new Credential
             {
-                throw new Exception("Пароль для указанных сервиса и логина уже сохранён. Используйте функцию обновления пароля для изменения данных.");
-            }
-            
-            var masterKey = this.userIdentity.GetUserKey();
-            var storablePassword = CryptographyUtils.Encrypt(masterKey, password);
-            var userId = this.userIdentity.GetUserId();
-            await this.credentialStore.CreateAsync(new Credential
-            {
-                Login = lowerLogin,
-                Password = storablePassword,
+                Login = login,
                 ServiceName = serviceName,
-                UserId = userId!.Value
-            },
-            cancellationToken);
+                OpenPassword = password
+            }, cancellationToken);
+        }
+
+        public async Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default)
+        {
+            await InternalAdd(credential, cancellationToken);
+        }
+
+        public async Task EditCredentialAsync(long id, string serviceName, string login, string password,
+            CancellationToken cancellationToken = default)
+        {
+            await InternalEdit(new Credential
+            {
+                Id = id,
+                ServiceName = serviceName,
+                Login = login,
+                OpenPassword = password
+            }, cancellationToken);
+        }
+
+        public async Task EditCredentialAsync(Credential credential, CancellationToken cancellationToken = default)
+        {
+            await InternalEdit(credential, cancellationToken);
         }
 
         public async Task ChangePasswordAsync(string serviceName, string login, string password, CancellationToken cancellationToken = default)
@@ -142,6 +155,81 @@
             return await this.credentialStore
                 .GetAll()
                 .SingleOrDefaultAsync(x => x.ServiceName == serviceName && x.Login == login, cancellationToken);
+        }
+
+        private async Task InternalAdd(Credential credential, CancellationToken cancellationToken)
+        {
+            var lowerLogin = credential.Login.ToLowerInvariant();
+            var existingCredential = await this.FindCredential(credential.ServiceName, lowerLogin, cancellationToken);
+            if (existingCredential != null)
+            {
+                throw new Exception("Пароль для указанных сервиса и логина уже сохранён. Используйте функцию обновления пароля для изменения данных.");
+            }
+
+            if (!string.IsNullOrEmpty(credential.OpenPassword))
+            {
+                var masterKey = this.userIdentity.GetUserKey();
+                var storablePassword = CryptographyUtils.Encrypt(masterKey, credential.OpenPassword);
+                credential.Password = storablePassword;
+            }
+            
+            var userId = this.userIdentity.GetUserId();
+            credential.UserId = userId!.Value;
+            credential.CreateDate = DateTime.Now;
+            
+            await this.credentialStore.CreateAsync(credential, cancellationToken);
+        }
+
+        private async Task InternalEdit(Credential credential, CancellationToken cancellationToken)
+        {
+            var existingCredential = await this.credentialStore.GetAsync(credential.Id, cancellationToken);
+            if (existingCredential == null)
+            {
+                throw new Exception("Переданная запись не найдена");
+            }
+
+            if (!string.IsNullOrEmpty(credential.OpenPassword))
+            {
+                var masterKey = this.userIdentity.GetUserKey();
+                var storablePassword = CryptographyUtils.Encrypt(masterKey, credential.OpenPassword);
+                existingCredential.Password = storablePassword;
+            }
+            
+            existingCredential.Login = credential.Login;
+            existingCredential.ServiceName = credential.ServiceName;
+            existingCredential.PhoneNumber = credential.PhoneNumber;
+            existingCredential.IsPhoneNumberAuth = credential.IsPhoneNumberAuth;
+
+            var existingQuestionIds = existingCredential.SecretQuestions.ToDictionary(x => x.Id);
+            var newQuestions = new List<SecretQuestion>();
+            var editedQuestions = new List<SecretQuestion>();
+            
+            foreach (var question in credential.SecretQuestions)
+            {
+                if (existingQuestionIds.TryGetValue(question.Id, out var existingQuestion))
+                {
+                    existingQuestion.Question = question.Question;
+                    existingQuestion.Answer = question.Answer;
+                    editedQuestions.Add(existingQuestion);
+                }
+                else
+                {
+                    question.CredentialId = existingCredential.Id;
+                    newQuestions.Add(question);
+                }
+            }
+
+            await using var transaction = await transactionManager.BeginTransactionAsync(cancellationToken);
+            await this.questionStore.CreateAsync(newQuestions, cancellationToken);
+            await this.questionStore.UpdateAsync(editedQuestions, cancellationToken);
+
+            var removedQuestionIds = existingCredential.SecretQuestions.Select(x => x.Id)
+                .Except(credential.SecretQuestions.Select(x => x.Id)).ToList();
+
+            await this.questionStore.DeleteAsync(removedQuestionIds, cancellationToken);
+            await this.credentialStore.UpdateAsync(existingCredential, cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
         }
     }
 }
