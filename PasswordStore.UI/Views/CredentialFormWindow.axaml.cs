@@ -5,6 +5,7 @@
     using Avalonia.Markup.Xaml;
     using Avalonia.Interactivity;
     using Avalonia.ReactiveUI;
+    using PasswordStore.UI.Models;
     using PasswordStore.UI.ViewModels;
     using ReactiveUI;
 
@@ -28,6 +29,16 @@
         private void CancelEditClick(object? sender, RoutedEventArgs e)
         {
             this.Close(null);
+        }
+
+        private void IsPhoneNumberBoxOnChecked(object? sender, RoutedEventArgs e)
+        {
+            this.ViewModel.IsPhoneNumber = true;
+        }
+
+        private void IsPhoneNumberBoxOnUnchecked(object? sender, RoutedEventArgs e)
+        {
+            this.ViewModel.IsPhoneNumber = false;
         }
     }
 }

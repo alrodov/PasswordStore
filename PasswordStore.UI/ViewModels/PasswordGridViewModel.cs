@@ -10,6 +10,7 @@
     using Avalonia;
     using Microsoft.Extensions.DependencyInjection;
     using PasswordStore.Lib.Crypto;
+    using PasswordStore.Lib.Entities;
     using PasswordStore.Lib.Extension;
     using PasswordStore.Lib.Interfaces;
     using PasswordStore.UI.Models;
@@ -133,7 +134,17 @@
                 OrderNumber = counter++,
                 ServiceName = cr.ServiceName,
                 Login = cr.Login,
-                Password = cr.Password
+                Password = cr.Password,
+                CreateDate = cr.CreateDate,
+                IsPhoneNumberAuth = cr.IsPhoneNumberAuth,
+                PhoneNumber = cr.PhoneNumber,
+                Note = cr.Note,
+                SecretQuestions = cr.SecretQuestions.Select(q => new SecretQuestionModel
+                {
+                    Id = q.Id,
+                    Question = q.Question,
+                    Answer = q.Answer
+                }).ToList()
             }).ToList();
 
             this.Unmask();
@@ -158,8 +169,7 @@
                 try
                 {
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-                    await Task.Run(async () => await this.credentialService.EditCredentialAsync(editedData.Id, editedData.ServiceName,
-                        editedData.Login, editedData.OpenPassword, cts.Token), cts.Token);
+                    await Task.Run(async () => await this.credentialService.EditCredentialAsync(this.FromModel(editedData), cts.Token), cts.Token);
                     await this.DoLoadData();
                 }
                 catch (Exception e)
@@ -187,8 +197,9 @@
                 {
                     this.Mask();
                     var cts = new CancellationTokenSource(App.DefaultTimeoutMilliseconds);
-                    await Task.Run(async () => await this.credentialService.AddCredentialAsync(addedData.ServiceName,
-                        addedData.Login, addedData.OpenPassword, cts.Token), cts.Token);
+                    
+                    
+                    await Task.Run(async () => await this.credentialService.AddCredentialAsync(this.FromModel(addedData), cts.Token), cts.Token);
                     await this.DoLoadData();
                 }
                 catch (Exception e)
@@ -242,6 +253,22 @@
             var password = CryptographyUtils.Decrypt(userIdentity.GetUserKey(), record.Password);
             await this.ShowMessageWindow($"Пароль: {password}");
         }
+        
+        private Credential FromModel(CredentialModel model) => new Credential
+        {
+            Id = model.Id,
+            ServiceName = model.ServiceName,
+            Login = model.Login,
+            OpenPassword = model.OpenPassword,
+            Note = model.Note,
+            IsPhoneNumberAuth = model.IsPhoneNumberAuth,
+            PhoneNumber = model.PhoneNumber,
+            SecretQuestions = model.SecretQuestions.Select(x => new SecretQuestion
+            {
+                Question = x.Question,
+                Answer = x.Answer
+            }).ToList()
+        };
 
         internal void EnumerateData(string? columnName = null)
         {

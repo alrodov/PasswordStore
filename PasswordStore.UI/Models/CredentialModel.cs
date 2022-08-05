@@ -1,5 +1,7 @@
 ﻿namespace PasswordStore.UI.Models
 {
+    using System;
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using PasswordStore.Lib.Entities;
 
@@ -18,5 +20,15 @@
         public string Password { get; set; }
         
         public string OpenPassword { get; set; }
+        
+        public DateTime CreateDate { get; set; } = DateTime.Now;
+        
+        public string Note { get; set; }
+        
+        public bool IsPhoneNumberAuth { get; set; }
+        
+        public string PhoneNumber { get; set; }
+        
+        public ICollection<SecretQuestionModel> SecretQuestions { get; set; } = new List<SecretQuestionModel>();
     }
 }
