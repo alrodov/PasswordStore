@@ -88,23 +88,6 @@
             await InternalEdit(credential, cancellationToken);
         }
 
-        public async Task EditCredentialAsync(long id, string serviceName, string login, string password,
-            CancellationToken cancellationToken = default)
-        {
-            var existingCredential = await this.credentialStore.GetAsync(id, cancellationToken);
-            if (existingCredential == null)
-            {
-                throw new Exception("Переданная запись не найдена");
-            }
-            
-            var masterKey = this.userIdentity.GetUserKey();
-            var storablePassword = CryptographyUtils.Encrypt(masterKey, password);
-            existingCredential.Password = storablePassword;
-            existingCredential.Login = login;
-            existingCredential.ServiceName = serviceName;
-            await this.credentialStore.UpdateAsync(existingCredential, cancellationToken);
-        }
-
         public async Task ChangePasswordAsync(string serviceName, string login, string password, CancellationToken cancellationToken = default)
         {
             var lowerLogin = login.ToLowerInvariant();
