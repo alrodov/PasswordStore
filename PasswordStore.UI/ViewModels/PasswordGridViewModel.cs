@@ -265,6 +265,7 @@
             PhoneNumber = model.PhoneNumber,
             SecretQuestions = model.SecretQuestions.Select(x => new SecretQuestion
             {
+                Id = x.Id,
                 Question = x.Question,
                 Answer = x.Answer
             }).ToList()

@@ -36,7 +36,7 @@
     
         public async Task<IList<Credential>> ListCredentialsAsync(string filterValue, CancellationToken cancellationToken = default)
         {
-            var query = this.credentialStore.GetAll();
+            var query = this.credentialStore.GetAll().Include(x => x.SecretQuestions).AsQueryable();
             if (!string.IsNullOrEmpty(filterValue))
             {
                 var searchPattern = $"%{filterValue.ToLower()}%";

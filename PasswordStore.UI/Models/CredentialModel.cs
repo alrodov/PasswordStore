@@ -29,6 +29,6 @@
         
         public string PhoneNumber { get; set; }
         
-        public ICollection<SecretQuestionModel> SecretQuestions { get; set; } = new List<SecretQuestionModel>();
+        public List<SecretQuestionModel> SecretQuestions { get; set; } = new List<SecretQuestionModel>();
     }
 }
